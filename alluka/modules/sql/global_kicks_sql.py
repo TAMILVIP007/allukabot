@@ -44,12 +44,11 @@ def gkick_setvalue(user_id, name, value):
         __load_gkick_userid_list()
       
 def gkick_reset(user_id):
-        user = SESSION.query(GloballyKickedUsers).get(user_id)
-        if user:
-            user.times = 0
-            SESSION.delete(user)
-        SESSION.commit()
-        __load_gkick_userid_list()
+    if user := SESSION.query(GloballyKickedUsers).get(user_id):
+        user.times = 0
+        SESSION.delete(user)
+    SESSION.commit()
+    __load_gkick_userid_list()
 
 def get_times(user_id):
         user = SESSION.query(GloballyKickedUsers).get(user_id)

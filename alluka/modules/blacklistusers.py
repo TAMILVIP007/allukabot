@@ -39,12 +39,11 @@ def bl_user(bot: Bot, update: Update, args: List[str]) -> str:
     try:
         target_user = bot.get_chat(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            message.reply_text("I can't seem to find this user.")
-            return ""
-        else:
+        if excp.message != "User not found":
             raise
 
+        message.reply_text("I can't seem to find this user.")
+        return ""
     sql.blacklist_user(user_id, reason)
     message.reply_text("I shall ignore the existence of this user!")
     log_message = "#BLACKLIST" \
@@ -77,22 +76,24 @@ def unbl_user(bot: Bot, update: Update, args: List[str]) -> str:
     try:
         target_user = bot.get_chat(user_id)
     except BadRequest as excp:
-        if excp.message == "User not found":
-            message.reply_text("I can't seem to find this user.")
-            return ""
-        else:
+        if excp.message != "User not found":
             raise
 
+        message.reply_text("I can't seem to find this user.")
+        return ""
     if sql.is_user_blacklisted(user_id):
 
         sql.unblacklist_user(user_id)
         message.reply_text("*notices user*")
-        log_message = "#UNBLACKLIST" \
-                      "\n<b>Admin:</b> {}" \
-                      "\n<b>User:</b> {}".format(mention_html(user.id, user.first_name),
-                                                 mention_html(target_user.id, target_user.first_name))
+        return (
+            "#UNBLACKLIST"
+            "\n<b>Admin:</b> {}"
+            "\n<b>User:</b> {}".format(
+                mention_html(user.id, user.first_name),
+                mention_html(target_user.id, target_user.first_name),
+            )
+        )
 
-        return log_message
 
     else:
         message.reply_text("I am not ignoring them at all though!")
@@ -107,9 +108,7 @@ def bl_users(bot: Bot, update: Update):
     for each_user in sql.BLACKLIST_USERS:
 
         user = bot.get_chat(each_user)
-        reason = sql.get_reason(each_user)
-
-        if reason:
+        if reason := sql.get_reason(each_user):
             users.append(f"• {mention_html(user.id, user.first_name)} :- {reason}")
         else:
             users.append(f"• {mention_html(user.id, user.first_name)}")
@@ -130,8 +129,7 @@ def __user_info__(user_id):
 
     if is_blacklisted:
         text = text.format("Yes")
-        reason = sql.get_reason(user_id)
-        if reason:
+        if reason := sql.get_reason(user_id):
             text += f"\nReason: <code>{reason}</code>"
     else:
         text = text.format("No")

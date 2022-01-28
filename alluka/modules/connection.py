@@ -25,25 +25,23 @@ def allow_connections(bot: Bot, update: Update, args: List[str]):
 
     chat = update.effective_chat
 
-    if chat.type != chat.PRIVATE:
-        if len(args) >= 1:
-            var = args[0]
-            if var == "no":
-                sql.set_allow_connect_to_chat(chat.id, False)
-                send_message(update.effective_message, "Connection has been disabled for this chat")
-            elif var == "yes":
-                sql.set_allow_connect_to_chat(chat.id, True)
-                send_message(update.effective_message, "Connection has been enabled for this chat")
-            else:
-                send_message(update.effective_message, "Please enter `yes` or `no`!", parse_mode=ParseMode.MARKDOWN)
-        else:
-            get_settings = sql.allow_connect_to_chat(chat.id)
-            if get_settings:
-                send_message(update.effective_message, "Connections to this group are *Allowed* for members!", parse_mode=ParseMode.MARKDOWN)
-            else:
-                send_message(update.effective_message, "Connection to this group are *Not Allowed* for members!", parse_mode=ParseMode.MARKDOWN)
-    else:
+    if chat.type == chat.PRIVATE:
         send_message(update.effective_message, "This command is for group only. Not in PM!")
+
+    elif args:
+        var = args[0]
+        if var == "no":
+            sql.set_allow_connect_to_chat(chat.id, False)
+            send_message(update.effective_message, "Connection has been disabled for this chat")
+        elif var == "yes":
+            sql.set_allow_connect_to_chat(chat.id, True)
+            send_message(update.effective_message, "Connection has been enabled for this chat")
+        else:
+            send_message(update.effective_message, "Please enter `yes` or `no`!", parse_mode=ParseMode.MARKDOWN)
+    elif get_settings := sql.allow_connect_to_chat(chat.id):
+        send_message(update.effective_message, "Connections to this group are *Allowed* for members!", parse_mode=ParseMode.MARKDOWN)
+    else:
+        send_message(update.effective_message, "Connection to this group are *Not Allowed* for members!", parse_mode=ParseMode.MARKDOWN)
 
 
 @run_async
@@ -85,7 +83,7 @@ def connect_chat(bot: Bot, update: Update, args: List[str]):
         return
 
     if update.effective_chat.type == 'private':
-        if len(args) >= 1:
+        if args:
             try:
                 connect_chat = int(args[0])
                 getstatusadmin = bot.get_chat_member(connect_chat, update.effective_message.from_user.id)
@@ -107,8 +105,9 @@ def connect_chat(bot: Bot, update: Update, args: List[str]):
             isallow = sql.allow_connect_to_chat(connect_chat)
 
             if (isadmin) or (isallow and ismember) or (user.id in SUDO_USERS) or (user.id in DEV_USERS):
-                connection_status = sql.connect(update.effective_message.from_user.id, connect_chat)
-                if connection_status:
+                if connection_status := sql.connect(
+                    update.effective_message.from_user.id, connect_chat
+                ):
                     conn_chat = dispatcher.bot.getChat(connected(bot, update, chat, user.id, need_admin=False))
                     chat_name = conn_chat.title
                     send_message(update.effective_message, "Successfully connected to *{}*. Use /connection for see current available commands.".format(chat_name), parse_mode=ParseMode.MARKDOWN)
@@ -126,8 +125,7 @@ def connect_chat(bot: Bot, update: Update, args: List[str]):
                 ]
             else:
                 buttons = []
-            conn = connected(bot, update, chat, user.id, need_admin=False)
-            if conn:
+            if conn := connected(bot, update, chat, user.id, need_admin=False):
                 connectedchat = dispatcher.bot.getChat(conn)
                 text = "You are connected to *{}* (`{}`)".format(connectedchat.title, conn)
                 buttons.append(InlineKeyboardButton(text="🔌 Disconnect", callback_data="connect_disconnect"))
@@ -158,16 +156,15 @@ def connect_chat(bot: Bot, update: Update, args: List[str]):
         ismember = getstatusadmin.status in ('member')
         isallow = sql.allow_connect_to_chat(chat.id)
         if (isadmin) or (isallow and ismember) or (user.id in SUDO_USERS) or (user.id in DEV_USERS):
-            connection_status = sql.connect(update.effective_message.from_user.id, chat.id)
-            if connection_status:
+            if connection_status := sql.connect(
+                update.effective_message.from_user.id, chat.id
+            ):
                 chat_name = dispatcher.bot.getChat(chat.id).title
                 send_message(update.effective_message, "Successfully connected to *{}*.".format(chat_name), parse_mode=ParseMode.MARKDOWN)
                 try:
                     sql.add_history_conn(user.id, str(chat.id), chat_name)
                     bot.send_message(update.effective_message.from_user.id, "You have connected with *{}*. Use /connection for see current available commands.".format(chat_name), parse_mode="markdown")
-                except BadRequest:
-                    pass
-                except Unauthorized:
+                except (BadRequest, Unauthorized):
                     pass
             else:
                 send_message(update.effective_message, "Connection failed!")
@@ -182,11 +179,12 @@ def disconnect_chat(bot: Bot, update: Update):
         return
 
     if update.effective_chat.type == 'private':
-        disconnection_status = sql.disconnect(update.effective_message.from_user.id)
-        if disconnection_status:
-           sql.disconnected_chat = send_message(update.effective_message, "Disconnected from chat!")
+        if disconnection_status := sql.disconnect(
+            update.effective_message.from_user.id
+        ):
+            sql.disconnected_chat = send_message(update.effective_message, "Disconnected from chat!")
         else:
-           send_message(update.effective_message, "You're not connected!")
+            send_message(update.effective_message, "You're not connected!")
     else:
         send_message(update.effective_message, "This command is only available in PM.")
 
@@ -198,30 +196,25 @@ def connected(bot, update, chat, user_id, need_admin=True):
 
     if spam == True:
         return
-        
-    if chat.type == chat.PRIVATE and sql.get_connected_chat(user_id):
 
-        conn_id = sql.get_connected_chat(user_id).chat_id
-        getstatusadmin = bot.get_chat_member(conn_id, update.effective_message.from_user.id)
-        isadmin = getstatusadmin.status in ('administrator', 'creator')
-        ismember = getstatusadmin.status in ('member')
-        isallow = sql.allow_connect_to_chat(conn_id)
-
-        if (isadmin) or (isallow and ismember) or (user.id in SUDO_USERS) or (user.id in DEV_USERS):
-            if need_admin == True:
-                if getstatusadmin.status in ('administrator', 'creator') or user_id in SUDO_USERS or user.id in DEV_USERS:
-                    return conn_id
-                else:
-                    send_message(update.effective_message, "You must be an admin in the connected group!")
-                    raise Exception("Not admin!")
-            else:
-                return conn_id
-        else:
-            send_message(update.effective_message, "The group changed the connection rights or you are no longer an admin.\nI've disconnected you.")
-            disconnect_chat(bot, update)
-            raise Exception("Not admin!")
-    else:
+    if chat.type != chat.PRIVATE or not sql.get_connected_chat(user_id):
         return False
+    conn_id = sql.get_connected_chat(user_id).chat_id
+    getstatusadmin = bot.get_chat_member(conn_id, update.effective_message.from_user.id)
+    isadmin = getstatusadmin.status in ('administrator', 'creator')
+    ismember = getstatusadmin.status in ('member')
+    isallow = sql.allow_connect_to_chat(conn_id)
+
+    if (isadmin) or (isallow and ismember) or (user.id in SUDO_USERS) or (user.id in DEV_USERS):
+        if need_admin != True:
+            return conn_id
+        if getstatusadmin.status in ('administrator', 'creator') or user_id in SUDO_USERS or user.id in DEV_USERS:
+            return conn_id
+        send_message(update.effective_message, "You must be an admin in the connected group!")
+    else:
+        send_message(update.effective_message, "The group changed the connection rights or you are no longer an admin.\nI've disconnected you.")
+        disconnect_chat(bot, update)
+    raise Exception("Not admin!")
 
 
 @run_async
@@ -258,9 +251,9 @@ def connect_button(bot: Bot, update: Update):
         isallow = sql.allow_connect_to_chat(target_chat)
 
         if (isadmin) or (isallow and ismember) or (user.id in SUDO_USERS) or (user.id in DEV_USERS):
-            connection_status = sql.connect(query.from_user.id, target_chat)
-
-            if connection_status:
+            if connection_status := sql.connect(
+                query.from_user.id, target_chat
+            ):
                 conn_chat = dispatcher.bot.getChat(connected(bot, update, chat, user.id, need_admin=False))
                 chat_name = conn_chat.title
                 query.message.edit_text("Successfully connected to *{}*. Use /connection for see current available commands.".format(chat_name), parse_mode=ParseMode.MARKDOWN)
@@ -270,11 +263,10 @@ def connect_button(bot: Bot, update: Update):
         else:
             bot.answer_callback_query(query.id, "Connection to this chat is not allowed!", show_alert=True)
     elif disconnect_match:
-        disconnection_status = sql.disconnect(query.from_user.id)
-        if disconnection_status:
-           sql.disconnected_chat = query.message.edit_text("Disconnected from chat!")
+        if disconnection_status := sql.disconnect(query.from_user.id):
+            sql.disconnected_chat = query.message.edit_text("Disconnected from chat!")
         else:
-           bot.answer_callback_query(query.id, "You're not connected!", show_alert=True)
+            bot.answer_callback_query(query.id, "You're not connected!", show_alert=True)
     elif clear_match:
         sql.clear_history_conn(query.from_user.id)
         query.message.edit_text("History connected has been cleared!")

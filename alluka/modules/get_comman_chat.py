@@ -30,13 +30,11 @@ def get_user_common_chats(bot: Bot, update: Update, args: List[str]):
             chat_name = bot.get_chat(chat).title
             sleep(0.3)
             text += f"• <code>{chat_name}</code>\n"
-        except BadRequest:
-            pass
-        except Unauthorized:
+        except (BadRequest, Unauthorized):
             pass
         except RetryAfter as e:
             sleep(e.retry_after)
-            
+
     if len(text) < 4096:
         msg.reply_text(text, parse_mode="HTML")
     else:

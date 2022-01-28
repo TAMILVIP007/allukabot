@@ -74,7 +74,7 @@ def new_fed(bot: Bot, update: Update):
         update.effective_message.reply_text("Please run this command in my PM only!")
         return
     fednam = message.text.split(None, 1)[1]
-    if not fednam == '':
+    if fednam != '':
         fed_id = str(uuid.uuid4())
         fed_name = fednam
         LOGGER.info(fed_id)
@@ -162,23 +162,19 @@ def join_fed(bot: Bot, update: Update, args: List[str]):
     administrators = chat.get_administrators()
     fed_id = sql.get_fed_id(chat.id)
 
-    if user.id in SUDO_USERS:
-        pass
-    else:
+    if user.id not in SUDO_USERS:
         for admin in administrators:
             status = admin.status
             if status == "creator":
                 print(admin)
-                if str(admin.user.id) == str(user.id):
-                    pass
-                else:
+                if str(admin.user.id) != str(user.id):
                     update.effective_message.reply_text("Only the group creator can do it!")
                     return
     if fed_id:
         message.reply_text("Uh, you can only join one federation in a chat.")
         return
 
-    if len(args) >= 1:
+    if args:
         fedd = args[0]
         print(fedd)
         if sql.search_fed_by_id(fedd) == False:
@@ -244,8 +240,7 @@ def user_join_fed(bot: Bot, update: Update, args: List[str]):
         if user_id == bot.id:
             update.effective_message.reply_text("Hah, you're really funny.")
             return
-        res = sql.user_join_fed(fed_id, user_id)
-        if res:
+        if res := sql.user_join_fed(fed_id, user_id):
             update.effective_message.reply_text("Successfully Promoted!")
         else:
             update.effective_message.reply_text("Failed to promote!")
@@ -459,9 +454,7 @@ def fed_ban(bot: Bot, update: Update, args: List[str]):
             try:
                 bot.kick_chat_member(chat, user_id)
             except BadRequest as excp:
-                if excp.message in FBAN_ERRORS:
-                    pass
-                else:
+                if excp.message not in FBAN_ERRORS:
                     LOGGER.warning("Could not fban in {} because: {}".format(chat, excp.message))
             except TelegramError:
                 pass
@@ -578,9 +571,7 @@ def unfban(bot: Bot, update: Update, args: List[str]):
                 """
 
         except BadRequest as excp:
-            if excp.message in UNFBAN_ERRORS:
-                pass
-            else:
+            if excp.message not in UNFBAN_ERRORS:
                 LOGGER.warning("Cannot remove fban in {} because: {}".format(chat, excp.message))
         except TelegramError:
             pass
@@ -626,7 +617,7 @@ def set_frules(bot: Bot, update: Update, args: List[str]):
         update.effective_message.reply_text("Only federation admins can do this!")
         return
 
-    if len(args) >= 1:
+    if args:
         msg = update.effective_message  # type: Optional[Message]
         raw_text = msg.text
         args = raw_text.split(None, 1)  # use python's maxsplit to separate cmd and args
@@ -730,9 +721,8 @@ def fed_ban_list(bot: Bot, update: Update, args: List[str], chat_data):
                 else:
                     if user.id not in SUDO_USERS:
                         put_chat(chat.id, new_jam, chat_data)
-            else:
-                if user.id not in SUDO_USERS:
-                    put_chat(chat.id, new_jam, chat_data)
+            elif user.id not in SUDO_USERS:
+                put_chat(chat.id, new_jam, chat_data)
             backups = ""
             for users in getfban:
                 getuserinfo = sql.get_all_fban_users_target(fed_id, users)
@@ -756,9 +746,8 @@ def fed_ban_list(bot: Bot, update: Update, args: List[str], chat_data):
                 else:
                     if user.id not in SUDO_USERS:
                         put_chat(chat.id, new_jam, chat_data)
-            else:
-                if user.id not in SUDO_USERS:
-                    put_chat(chat.id, new_jam, chat_data)
+            elif user.id not in SUDO_USERS:
+                put_chat(chat.id, new_jam, chat_data)
             backups = "id,firstname,lastname,username,reason\n"
             for users in getfban:
                 getuserinfo = sql.get_all_fban_users_target(fed_id, users)
@@ -795,9 +784,8 @@ def fed_ban_list(bot: Bot, update: Update, args: List[str], chat_data):
             else:
                 if user.id not in SUDO_USERS:
                     put_chat(chat.id, new_jam, chat_data)
-        else:
-            if user.id not in SUDO_USERS:
-                put_chat(chat.id, new_jam, chat_data)
+        elif user.id not in SUDO_USERS:
+            put_chat(chat.id, new_jam, chat_data)
         cleanr = re.compile('<.*?>')
         cleantext = re.sub(cleanr, '', text)
         with BytesIO(str.encode(cleantext)) as output:

@@ -84,8 +84,7 @@ def add_filter(chat_id, keyword, reply, is_sticker=False, is_document=False, is_
         buttons = []
 
     with CUST_FILT_LOCK:
-        prev = SESSION.query(CustomFilters).get((str(chat_id), keyword))
-        if prev:
+        if prev := SESSION.query(CustomFilters).get((str(chat_id), keyword)):
             with BUTTON_LOCK:
                 prev_buttons = SESSION.query(Buttons).filter(Buttons.chat_id == str(chat_id),
                                                              Buttons.keyword == keyword).all()
@@ -110,8 +109,7 @@ def add_filter(chat_id, keyword, reply, is_sticker=False, is_document=False, is_
 def remove_filter(chat_id, keyword):
     global CHAT_FILTERS
     with CUST_FILT_LOCK:
-        filt = SESSION.query(CustomFilters).get((str(chat_id), keyword))
-        if filt:
+        if filt := SESSION.query(CustomFilters).get((str(chat_id), keyword)):
             if keyword in CHAT_FILTERS.get(str(chat_id), []):  # Sanity check
                 CHAT_FILTERS.get(str(chat_id), []).remove(keyword)
 

@@ -12,10 +12,7 @@ from alluka.modules.disable import DisableAbleCommandHandler
 def totranslate(bot: Bot, update: Update):
 
     msg = update.effective_message
-    problem_lang_code = []
-    for key in LANGUAGES:
-        if "-" in key:
-            problem_lang_code.append(key)
+    problem_lang_code = [key for key in LANGUAGES if "-" in key]
     try:
         if msg.reply_to_message and msg.reply_to_message.text:
             
@@ -28,7 +25,7 @@ def totranslate(bot: Bot, update: Update):
                 source_lang = args[1].split(None, 1)[0]
             except:
                 source_lang = "en"
-            
+
             if source_lang.count('-') == 2:
                 for lang in problem_lang_code:
                     if lang in source_lang:
@@ -44,7 +41,7 @@ def totranslate(bot: Bot, update: Update):
                         dest_lang = source_lang
                         source_lang = None
                         break
-                if dest_lang == None:
+                if dest_lang is None:
                     dest_lang = source_lang.split("-")[1]
                     source_lang = source_lang.split("-")[0]
             else:
@@ -57,7 +54,7 @@ def totranslate(bot: Bot, update: Update):
                     text = text.replace(emoji, '')
 
             trl = Translator()
-            if source_lang == None:
+            if source_lang is None:
                 detection = trl.detect(text)
                 tekstr = trl.translate(text, dest=dest_lang)
                 return message.reply_text("Translated from `{}` to `{}`:\n`{}`".format(detection.lang, dest_lang, tekstr.text), parse_mode=ParseMode.MARKDOWN)
@@ -93,7 +90,7 @@ def totranslate(bot: Bot, update: Update):
                         dest_lang = temp_source_lang.split("-")[1]
                         source_lang = temp_source_lang.split("-")[0]
             trl = Translator()
-            if dest_lang == None:
+            if dest_lang is None:
                 detection = trl.detect(text)
                 tekstr = trl.translate(text, dest=source_lang)
                 return message.reply_text("Translated from `{}` to `{}`:\n`{}`".format(detection.lang, source_lang, tekstr.text), parse_mode=ParseMode.MARKDOWN)

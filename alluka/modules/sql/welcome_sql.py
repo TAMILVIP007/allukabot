@@ -126,8 +126,7 @@ BLACKLIST = set()
 
 def welcome_mutes(chat_id):
     try:
-        welcomemutes = SESSION.query(WelcomeMute).get(str(chat_id))
-        if welcomemutes:
+        if welcomemutes := SESSION.query(WelcomeMute).get(str(chat_id)):
             return welcomemutes.welcomemutes
         return False
     finally:
@@ -135,8 +134,7 @@ def welcome_mutes(chat_id):
 
 def set_welcome_mutes(chat_id, welcomemutes):
     with WM_LOCK:
-        prev = SESSION.query(WelcomeMute).get((str(chat_id)))
-        if prev:
+        if prev := SESSION.query(WelcomeMute).get((str(chat_id))):
             SESSION.delete(prev)
         welcome_m = WelcomeMute(str(chat_id), welcomemutes)
         SESSION.add(welcome_m)
@@ -316,8 +314,7 @@ def get_gdbye_buttons(chat_id):
 
 def get_cas_status(chat_id):
     try:
-        resultObj = SESSION.query(CombotCASStatus).get(str(chat_id))
-        if resultObj:
+        if resultObj := SESSION.query(CombotCASStatus).get(str(chat_id)):
             return resultObj.status
         return True
     finally:
@@ -326,8 +323,7 @@ def get_cas_status(chat_id):
 def set_cas_status(chat_id, status):
     with CAS_LOCK:
         ban = False
-        prevObj = SESSION.query(CombotCASStatus).get(str(chat_id))
-        if prevObj:
+        if prevObj := SESSION.query(CombotCASStatus).get(str(chat_id)):
             ban = prevObj.autoban
             SESSION.delete(prevObj)
         newObj = CombotCASStatus(str(chat_id), status, ban)
@@ -346,8 +342,7 @@ def get_cas_autoban(chat_id):
 def set_cas_autoban(chat_id, autoban):
     with CAS_LOCK:
         status = True
-        prevObj = SESSION.query(CombotCASStatus).get(str(chat_id))
-        if prevObj:
+        if prevObj := SESSION.query(CombotCASStatus).get(str(chat_id)):
             status = prevObj.status
             SESSION.delete(prevObj)
         newObj = CombotCASStatus(str(chat_id), status, autoban)
@@ -356,8 +351,7 @@ def set_cas_autoban(chat_id, autoban):
 
 def migrate_chat(old_chat_id, new_chat_id):
     with INSERTION_LOCK:
-        chat = SESSION.query(Welcome).get(str(old_chat_id))
-        if chat:
+        if chat := SESSION.query(Welcome).get(str(old_chat_id)):
             chat.chat_id = str(new_chat_id)
 
         with WELC_BTN_LOCK:
@@ -390,8 +384,7 @@ def blacklistChat(chat_id):
     
 def unblacklistChat(chat_id):
     with BANCHATLOCK:
-        chat = SESSION.query(BannedChat).get(chat_id)
-        if chat:
+        if chat := SESSION.query(BannedChat).get(chat_id):
             SESSION.delete(chat)
         SESSION.commit()
         __load_blacklisted_chats_list()
@@ -401,8 +394,7 @@ def isBanned(chat_id):
 
 def getDefenseStatus(chat_id):
     try:
-        resultObj = SESSION.query(DefenseMode).get(str(chat_id))
-        if resultObj:
+        if resultObj := SESSION.query(DefenseMode).get(str(chat_id)):
             return resultObj.status
         return False #default
     finally:
@@ -410,8 +402,7 @@ def getDefenseStatus(chat_id):
 
 def setDefenseStatus(chat_id, status):
     with DEFENSE_LOCK:
-        prevObj = SESSION.query(DefenseMode).get(str(chat_id))
-        if prevObj:
+        if prevObj := SESSION.query(DefenseMode).get(str(chat_id)):
             SESSION.delete(prevObj)
         newObj = DefenseMode(str(chat_id), status)
         SESSION.add(newObj)
@@ -419,8 +410,7 @@ def setDefenseStatus(chat_id, status):
 
 def getKickTime(chat_id):
     try:
-        resultObj = SESSION.query(AutoKickSafeMode).get(str(chat_id))
-        if resultObj:
+        if resultObj := SESSION.query(AutoKickSafeMode).get(str(chat_id)):
             return resultObj.timeK
         return 90 #90 seconds
     finally:
@@ -428,8 +418,7 @@ def getKickTime(chat_id):
 
 def setKickTime(chat_id, value):
     with AUTOKICK_LOCK:
-        prevObj = SESSION.query(AutoKickSafeMode).get(str(chat_id))
-        if prevObj:
+        if prevObj := SESSION.query(AutoKickSafeMode).get(str(chat_id)):
             SESSION.delete(prevObj)
         newObj = AutoKickSafeMode(str(chat_id), int(value))
         SESSION.add(newObj)

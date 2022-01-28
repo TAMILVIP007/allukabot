@@ -33,7 +33,7 @@ except Exception as eee:
     )
     quit(1)
 
-if not CONFIG['alluka_explain_config'] == "alluka_zoldyck":
+if CONFIG['alluka_explain_config'] != "alluka_zoldyck":
     print("Read config.yml file carefully.")
     quit(1)
 
@@ -61,19 +61,19 @@ try:
 except ValueError:
     raise Exception("Your 'owner_username' must be set.")
 try:
-    SUDO_USERS = set(int(x) for x in CONFIG['sudo_users'] or [])
+    SUDO_USERS = {int(x) for x in CONFIG['sudo_users'] or []}
 except ValueError:
     raise Exception("Your sudo users list does not contain valid integers.")
 try:
-    SUPPORT_USERS = set(int(x) for x in CONFIG['support_users'] or [])
+    SUPPORT_USERS = {int(x) for x in CONFIG['support_users'] or []}
 except ValueError:
     raise Exception("Your support users list does not contain valid integers.")
 try:
-    DEV_USERS = set(int(x) for x in CONFIG['dev_users'] or [])
+    DEV_USERS = {int(x) for x in CONFIG['dev_users'] or []}
 except ValueError:
     raise Exception("Your dev users list does not contain valid integers.")
 try:
-    WHITELIST_USERS = set(int(x) for x in CONFIG['whitelist_users'] or [])
+    WHITELIST_USERS = {int(x) for x in CONFIG['whitelist_users'] or []}
 except ValueError:
     raise Exception(
         "Your whitelisted users list does not contain valid integers.")
@@ -146,9 +146,7 @@ if ALLOW_EXCL:
     tg.CommandHandler = CustomCommandHandler
 
 def spamfilters(text, user_id, chat_id):
-    #print("{} | {} | {}".format(text, user_id, chat_id))
-    if int(user_id) in SPAMMERS:
-        print("This user is a spammer!")
-        return True
-    else:
+    if int(user_id) not in SPAMMERS:
         return False
+    print("This user is a spammer!")
+    return True

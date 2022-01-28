@@ -29,7 +29,7 @@ def import_data(bot: Bot, update):
     msg = update.effective_message  # type: Optional[Message]
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
-  
+
 
     conn = connected(bot, update, chat, user.id, need_admin=True)
     if conn:
@@ -64,7 +64,7 @@ def import_data(bot: Bot, update):
 
         # Check if backup is this chat
         try:
-            if data.get(str(chat.id)) == None:
+            if data.get(str(chat.id)) is None:
                 if conn:
                     text = "Backup comes from another chat, I can't return another chat to chat *{}*".format(chat_name)
                 else:
@@ -114,8 +114,7 @@ def export_data(bot: Bot, update: Update, chat_data):
     chat = update.effective_chat
     current_chat_id = update.effective_chat.id
 
-    conn = connected(bot, update, chat, user.id, need_admin=True)
-    if conn:
+    if conn := connected(bot, update, chat, user.id, need_admin=True):
         chat = dispatcher.bot.getChat(conn)
         chat_id = conn
         chat_name = dispatcher.bot.getChat(conn).title
@@ -138,9 +137,8 @@ def export_data(bot: Bot, update: Update, chat_data):
         else:
             if user.id !=  802002142:
                 put_chat(chat_id, new_jam, chat_data)
-    else:
-        if user.id !=  802002142:
-            put_chat(chat_id, new_jam, chat_data)
+    elif user.id !=  802002142:
+        put_chat(chat_id, new_jam, chat_data)
 
     note_list = sql.get_all_chat_notes(chat_id)
     backup = {}
@@ -237,9 +235,8 @@ def export_data(bot: Bot, update: Update, chat_data):
     # Backing up
     backup[chat_id] = {'bot': bot.id, 'hashes': {'info': {'rules': rules}, 'extra': notes, 'blacklist': bl, 'disabled': disabledcmd, 'locks': locked}}
     baccinfo = json.dumps(backup, indent=4)
-    f=open("alluka{}.backup".format(chat_id), "w")
-    f.write(str(baccinfo))
-    f.close()
+    with open("alluka{}.backup".format(chat_id), "w") as f:
+        f.write(str(baccinfo))
     bot.sendChatAction(current_chat_id, "upload_document")
     tgl = time.strftime("%H:%M:%S - %d/%m/%Y", time.localtime(time.time()))
     try:
@@ -253,17 +250,13 @@ def export_data(bot: Bot, update: Update, chat_data):
 # Temporary data
 def put_chat(chat_id, value, chat_data):
     # print(chat_data)
-    if value == False:
-        status = False
-    else:
-        status = True
+    status = value != False
     chat_data[chat_id] = {'backups': {"status": status, "value": value}}
 
 def get_chat(chat_id, chat_data):
     # print(chat_data)
     try:
-        value = chat_data[chat_id]['backups']
-        return value
+        return chat_data[chat_id]['backups']
     except KeyError:
         return {"status": False, "value": False}
 

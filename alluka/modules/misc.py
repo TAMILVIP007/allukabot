@@ -113,8 +113,7 @@ def lyrics(bot: Bot, update: Update, args):
         msg.reply_text("You haven't specified which song to look for!")
         return
     else:
-        song = Song.find_song(query)
-        if song:
+        if song := Song.find_song(query):
             if song.lyrics:
                 reply = song.format()
             else:
@@ -136,27 +135,25 @@ def add_chat(bot: Bot, update: Update):
     global api_client
     chat_id = update.effective_chat.id
     msg = update.effective_message
-    is_chat = sql.is_chat(chat_id)
-    if not is_chat:
+    if is_chat := sql.is_chat(chat_id):
+        msg.reply_text("lydia is already enabled for this chat!")
+    else:
         ses = api_client.create_session()
         ses_id = str(ses.id)
         expires = str(ses.expires)
         sql.set_ses(chat_id, ses_id, expires)
         msg.reply_text("lydia successfully enabled for this chat!")
-    else:
-        msg.reply_text("lydia is already enabled for this chat!")
         
         
 @run_async
 def remove_chat(bot: Bot, update: Update):
     msg = update.effective_message
     chat_id = update.effective_chat.id
-    is_chat = sql.is_chat(chat_id)
-    if not is_chat:
-        msg.reply_text("lydia isn't enabled here in the first place!")
-    else:
+    if is_chat := sql.is_chat(chat_id):
         sql.rem_chat(chat_id)
         msg.reply_text("lydia disabled successfully!")
+    else:
+        msg.reply_text("lydia isn't enabled here in the first place!")
         
         
 def check_message(bot: Bot, message):
@@ -250,13 +247,12 @@ def shellExecute(bot: Bot, update: Update):
         with open("shell.txt",'rb') as f:
             bot.send_document(document=f, filename=f.name,
                                   reply_to_message_id=update.message.message_id,
-                                  chat_id=update.message.chat_id)  
+                                  chat_id=update.message.chat_id)
+    elif output[1].decode():
+        sendMessage(f"<code>{output[1].decode()}</code>", bot, update)
+        return
     else:
-        if output[1].decode():
-            sendMessage(f"<code>{output[1].decode()}</code>", bot, update)
-            return
-        else:
-            sendMessage(f"<code>{output[0].decode()}</code>", bot, update)
+        sendMessage(f"<code>{output[0].decode()}</code>", bot, update)
 
 #ud
 @run_async
@@ -270,7 +266,7 @@ def ud(bot: Bot, update: Update):
 #wiki
 @run_async
 def wiki(bot: Bot, update: Update):
-    msg = update.effective_message.reply_to_message if update.effective_message.reply_to_message else update.effective_message
+    msg = update.effective_message.reply_to_message or update.effective_message
     res = ""
     if msg == update.effective_message:
         search = msg.text.split(" ", maxsplit=1)[1]
@@ -319,31 +315,28 @@ def wall(bot: Bot, update: Update, args):
     chat_id = update.effective_chat.id
     msg = update.effective_message
     msg_id = update.effective_message.message_id
-    query = " ".join(args)
-    if not query:
-        msg.reply_text("Please enter a query!")
-        return
-    else:
+    if query := " ".join(args):
         caption = query
         term = query.replace(" ", "%20")
         json_rep = r.get(f"https://wall.alphacoders.com/api2.0/get.php?auth={WALL_API}&method=search&term={term}").json()
         if not json_rep.get("success"):
             msg.reply_text("An error occurred! Report this @allukabot")
+        elif wallpapers := json_rep.get("wallpapers"):
+            index = randint(0, len(wallpapers)-1) # Choose random index
+            wallpaper = wallpapers[index]
+            wallpaper = wallpaper.get("url_image")
+            wallpaper = wallpaper.replace("\\", "")
+            bot.send_photo(chat_id, photo=wallpaper,
+            reply_to_message_id=msg_id, timeout=60)
+            bot.send_document(chat_id, document=wallpaper,
+            filename='wallpaper', reply_to_message_id=msg_id,
+            timeout=60)
         else:
-            wallpapers = json_rep.get("wallpapers")
-            if not wallpapers:
-                msg.reply_text("No results found!")
-                return
-            else:
-                index = randint(0, len(wallpapers)-1) # Choose random index
-                wallpaper = wallpapers[index]
-                wallpaper = wallpaper.get("url_image")
-                wallpaper = wallpaper.replace("\\", "")
-                bot.send_photo(chat_id, photo=wallpaper,
-                reply_to_message_id=msg_id, timeout=60)
-                bot.send_document(chat_id, document=wallpaper,
-                filename='wallpaper', reply_to_message_id=msg_id,
-                timeout=60)
+            msg.reply_text("No results found!")
+            return
+    else:
+        msg.reply_text("Please enter a query!")
+        return
 #githubinfo
 @run_async
 def github(bot: Bot, update: Update):
@@ -519,7 +512,7 @@ def convert(bot: Bot, update: Update):
         try:
             current_rate = float(response['Realtime Currency Exchange Rate']['5. Exchange Rate'])
         except KeyError:
-            update.effective_message.reply_text(f"Currency Not Supported.")
+            update.effective_message.reply_text('Currency Not Supported.')
             return
         new_cur_amount = round(orig_cur_amount * current_rate, 5)
         update.effective_message.reply_text(f"{orig_cur_amount} {orig_cur} = {new_cur_amount} {new_cur}")
@@ -640,7 +633,7 @@ def magisk(bot, update):
                     f'• Zip - [{data["magisk"]["version"]}-{data["magisk"]["versionCode"]}]({data["magisk"]["link"]}) \n' \
                     f'• App - [{data["app"]["version"]}-{data["app"]["versionCode"]}]({data["app"]["link"]}) \n' \
                     f'• Uninstaller - [{data["magisk"]["version"]}-{data["magisk"]["versionCode"]}]({data["uninstaller"]["link"]})\n\n'
-                        
+
 
     del_msg = update.message.reply_text("*Latest Magisk Releases:*\n{}".format(releases),
                                parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
@@ -649,13 +642,16 @@ def magisk(bot, update):
         del_msg.delete()
         update.effective_message.delete()
     except BadRequest as err:
-        if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+        if err.message in [
+            "Message to delete not found",
+            "Message can't be deleted",
+        ]:
             return
 
 @run_async
 def device(bot, update, args):
     if len(args) == 0:
-        reply = f'No codename provided, write a codename for fetching informations.'
+        reply = 'No codename provided, write a codename for fetching informations.'
         del_msg = update.effective_message.reply_text("{}".format(reply),
                                parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         time.sleep(5)
@@ -663,7 +659,10 @@ def device(bot, update, args):
             del_msg.delete()
             update.effective_message.delete()
         except BadRequest as err:
-            if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+            if err.message in [
+                "Message to delete not found",
+                "Message can't be deleted",
+            ]:
                 return
     device = " ".join(args)
     db = get(DEVICES_DATA).json()
@@ -676,7 +675,7 @@ def device(bot, update, args):
         codename = newdevice
         reply += f'<b>{brand} {name}</b>\n' \
             f'Model: <code>{model}</code>\n' \
-            f'Codename: <code>{codename}</code>\n\n'  
+            f'Codename: <code>{codename}</code>\n\n'
     except KeyError as err:
         reply = f"Couldn't find info about {device}!\n"
         del_msg = update.effective_message.reply_text("{}".format(reply),
@@ -686,15 +685,18 @@ def device(bot, update, args):
             del_msg.delete()
             update.effective_message.delete()
         except BadRequest as err:
-            if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+            if err.message in [
+                "Message to delete not found",
+                "Message can't be deleted",
+            ]:
                 return
     update.message.reply_text("{}".format(reply),
                                parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 @run_async
 def checkfw(bot, update, args):
-    if not len(args) == 2:
-        reply = f'Give me something to fetch, like:\n`/checkfw SM-N975F DBT`'
+    if len(args) != 2:
+        reply = 'Give me something to fetch, like:\n`/checkfw SM-N975F DBT`'
         del_msg = update.effective_message.reply_text("{}".format(reply),
                                parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         time.sleep(5)
@@ -702,10 +704,13 @@ def checkfw(bot, update, args):
             del_msg.delete()
             update.effective_message.delete()
         except BadRequest as err:
-            if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+            if err.message in [
+                "Message to delete not found",
+                "Message can't be deleted",
+            ]:
                 return
     temp,csc = args
-    model = f'sm-'+temp if not temp.upper().startswith('SM-') else temp
+    model = 'sm-' + temp if not temp.upper().startswith('SM-') else temp
     fota = get(f'http://fota-cloud-dn.ospserver.net/firmware/{csc.upper()}/{model.upper()}/version.xml')
     test = get(f'http://fota-cloud-dn.ospserver.net/firmware/{csc.upper()}/{model.upper()}/version.test.xml')
     if test.status_code != 200:
@@ -717,7 +722,10 @@ def checkfw(bot, update, args):
             del_msg.delete()
             update.effective_message.delete()
         except BadRequest as err:
-            if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+            if err.message in [
+                "Message to delete not found",
+                "Message can't be deleted",
+            ]:
                 return
     page1 = BeautifulSoup(fota.content, 'lxml')
     page2 = BeautifulSoup(test.content, 'lxml')
@@ -731,7 +739,7 @@ def checkfw(bot, update, args):
             reply += f'• Phone: `{phone1}`\n'
         if os1:
             reply += f'• Android: `{os1}`\n'
-        reply += f'\n'
+        reply += '\n'
     else:
         reply = f'*No public release found for {model.upper()} and {csc.upper()}.*\n\n'
     reply += f'*Latest test firmware for {model.upper()} and {csc.upper()} is:*\n'
@@ -742,18 +750,18 @@ def checkfw(bot, update, args):
             reply += f'• Phone: `{phone2}`\n'
         if os2:
             reply += f'• Android: `{os2}`\n'
-        reply += f'\n'
+        reply += '\n'
     else:
         md5=page2.find("latest").text.strip()
         reply += f'• Hash: `{md5}`\n• Android: `{os2}`\n\n'
-    
+
     update.message.reply_text("{}".format(reply),
                            parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
 @run_async
 def getfw(bot, update, args):
-    if not len(args) == 2:
-        reply = f'Give me something to fetch, like:\n`/getfw SM-N975F DBT`'
+    if len(args) != 2:
+        reply = 'Give me something to fetch, like:\n`/getfw SM-N975F DBT`'
         del_msg = update.effective_message.reply_text("{}".format(reply),
                                parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
         time.sleep(5)
@@ -761,10 +769,13 @@ def getfw(bot, update, args):
             del_msg.delete()
             update.effective_message.delete()
         except BadRequest as err:
-            if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+            if err.message in [
+                "Message to delete not found",
+                "Message can't be deleted",
+            ]:
                 return
     temp,csc = args
-    model = f'sm-'+temp if not temp.upper().startswith('SM-') else temp
+    model = 'sm-' + temp if not temp.upper().startswith('SM-') else temp
     test = get(f'http://fota-cloud-dn.ospserver.net/firmware/{csc.upper()}/{model.upper()}/version.test.xml')
     if test.status_code != 200:
         reply = f"Couldn't find any firmware downloads for {temp.upper()} and {csc.upper()}, please refine your search or try again later!"
@@ -775,7 +786,10 @@ def getfw(bot, update, args):
             del_msg.delete()
             update.effective_message.delete()
         except BadRequest as err:
-            if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+            if err.message in [
+                "Message to delete not found",
+                "Message can't be deleted",
+            ]:
                 return
     url1 = f'https://samfrew.com/model/{model.upper()}/region/{csc.upper()}/'
     url2 = f'https://www.sammobile.com/samsung/firmware/{model.upper()}/{csc.upper()}/'
@@ -793,7 +807,7 @@ def getfw(bot, update, args):
             reply += f'• Phone: `{phone}`\n'
         if os:
             reply += f'• Android: `{os}`\n'
-    reply += f'\n'
+    reply += '\n'
     reply += f'*Downloads for {model.upper()} and {csc.upper()}*\n'
     reply += f'• [samfrew.com]({url1})\n'
     reply += f'• [sammobile.com]({url2})\n'
@@ -813,7 +827,10 @@ def twrp(bot, update, args):
             del_msg.delete()
             update.effective_message.delete()
         except BadRequest as err:
-            if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+            if err.message in [
+                "Message to delete not found",
+                "Message can't be deleted",
+            ]:
                 return
 
     device = " ".join(args)
@@ -827,7 +844,10 @@ def twrp(bot, update, args):
             del_msg.delete()
             update.effective_message.delete()
         except BadRequest as err:
-            if (err.message == "Message to delete not found" ) or (err.message == "Message can't be deleted" ):
+            if err.message in [
+                "Message to delete not found",
+                "Message can't be deleted",
+            ]:
                 return
     else:
         reply = f'*Latest Official TWRP for {device}*\n'            
@@ -866,8 +886,7 @@ def reverse(bot: Bot, update: Update, args: List[str]):
     rtmid = msg.message_id
     imagename = "okgoogle.png"
 
-    reply = msg.reply_to_message
-    if reply:
+    if reply := msg.reply_to_message:
         if reply.sticker:
             file_id = reply.sticker.file_id
         elif reply.photo:
@@ -887,7 +906,7 @@ def reverse(bot: Bot, update: Update, args: List[str]):
                 lim = 2
         else:
             lim = 2
-    elif args and not reply:
+    elif args:
         splatargs = msg.text.split(" ")
         if len(splatargs) == 3:                
             img_link = splatargs[1]
@@ -904,11 +923,11 @@ def reverse(bot: Bot, update: Update, args: List[str]):
         try:
             urllib.request.urlretrieve(img_link, imagename)
         except HTTPError as HE:
-            if HE.reason == 'Not Found':
-                msg.reply_text("Image not found.")
-                return
-            elif HE.reason == 'Forbidden':
+            if HE.reason == 'Forbidden':
                 msg.reply_text("Couldn't access the provided link, The website might have blocked accessing to the website by bot or the website does not existed.")
+                return
+            elif HE.reason == 'Not Found':
+                msg.reply_text("Image not found.")
                 return
         except URLError as UE:
             msg.reply_text(f"{UE.reason}")
@@ -936,7 +955,7 @@ def reverse(bot: Bot, update: Update, args: List[str]):
         os.remove(imagename)
         match = ParseSauce(fetchUrl + "&hl=en")
         guess = match['best_guess']
-        if match['override'] and not match['override'] == '':
+        if match['override'] and match['override'] != '':
             imgspage = match['override']
         else:
             imgspage = match['similar_images']
@@ -1044,14 +1063,10 @@ def anime(bot: Bot, update: Update, args):
         score = anime.get("score")
         rating = anime.get("rating")
         genre_lst = anime.get("genres")
-        genres = ""
-        for genre in genre_lst:
-            genres += genre.get("name") + ", "
+        genres = "".join(genre.get("name") + ", " for genre in genre_lst)
         genres = genres[:-2]
-        studios = ""
         studio_lst = anime.get("studios")
-        for studio in studio_lst:
-            studios += studio.get("name") + ", "
+        studios = "".join(studio.get("name") + ", " for studio in studio_lst)
         studios = studios[:-2]
         duration = anime.get("duration")
         premiered = anime.get("premiered")
@@ -1083,8 +1098,8 @@ def anime(bot: Bot, update: Update, args):
         keyb = [
              [InlineKeyboardButton("More Information", url=url)]
          ]
-    
-    
+
+
     msg.reply_text(rep, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyb))
     
 

@@ -157,65 +157,61 @@ def new_member(bot: Bot, update: Update):
                 bot.send_sticker(chat.id, BAN_STICKER) 
                 continue
 
-            # Welcome SUNNY
             elif new_mem.id in HISOKA:
                 update.effective_message.reply_photo(HISOKA_IMG,"blop! blop! <b>Hisoka Morow</b> join your family!\n <i>'My greatest pleasure comes when such people crumple to their knees and I look down upon their disbelieving faces as their plans fail.♥'</i>\nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 bot.send_sticker(chat.id, HISOKA_WELCOME) 
                 continue
-            
-            # Welcome BHAVIK
+
             elif new_mem.id in GING:
                 update.effective_message.reply_photo(GING_IMG,"haye!! <b>Ging</b> is just join your family!!\n <i>I'm enjoying the journey. So if your destination is the same as mine, enjoy the side trips. A lot. Something more important than the thing you're hunting could be right there by the side of the road.'</i>\nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue
-        
-            # Welcome Whitelisted
+
             elif new_mem.id in SHIZUKU:
                 update.effective_message.reply_photo(SHIZUKU_IMG,"oh!! <b>Shizuku Murasaki</b> (シズク゠ムラサキ, Shizuku Murasaki) is just join your family!! \n<i>'Breaking the rules means rejecting the Spiders, and Chrollo, too. That I never want to do.'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue        
-            
+
             elif new_mem.id in SILVA:
                 update.effective_message.reply_photo(SILVA_IMG,"Woaw!! My father is just enter!!<b>Silva Zoldyck </b> (シズク゠ムラサキ, Shizuku Murasaki) is just join this family!! \n<i>''Never overreach your limits...! Make your move only when you're 100% positive you can make the kill. Otherwise, bide your time...!! It's foolish to show your hand when the odds are against you.'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue       
-            
+
             elif new_mem.id in GON:
                 update.effective_message.reply_photo(GON_IMG,"Woaw!! <b>Gon Freecss (ゴン゠フリークス, Gon Furīkusu)</b>is just join this family!! \n<i>''I can't stand being on the losing end forever!!'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue        
-            
+
             elif new_mem.id in ILLUMI_ZOLDYCK:
                 update.effective_message.reply_photo(ILLUMI_ZOLDYCK_IMG,"Haye!! My elder brother <b>Illumi Zoldyck (イルミ゠ゾルディック, Irumi Zorudikku) is just join this family!!</b> just enter here.\n<i>''Now I can tell you, that you would not make a good Hunter. Your calling is as an assassin. There's no fire in you, just darkness. It sustains you, drains you of any desire. Your only joy is in causing death, and even that is fleeting. That is how Dad and I molded you.'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue       
-            
+
             elif new_mem.id in LEORIO:
                 update.effective_message.reply_photo(LEORIO_IMG,"woh!! The simple guy  <b>Leorio Paradinight</b> is just join this family!!\n<i>'I'm a simple guy. Figured I'd become a doctor... so I could cure some kid with the same disease, tell his parents they owed me nothing! Me... A doctor! Now there's a joke!! Do you know how much it costs to even try to become a doctor? The mind boggles!! It's always about money! Always!! That's why I want it!'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue        
-            
+
             elif new_mem.id in BISCUIT:
                 update.effective_message.reply_photo(BISCUIT_IMG,"Haye!! The sleeveless girl  <b>Biscuit Krueger</b> is just join this family!!\n<i>'After 50 years of lying through my teeth, I can tell whether someone's telling the truth.'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue    
-            
+
             elif new_mem.id in CHROLLO:
                 update.effective_message.reply_photo(CHROLLO_IMG,"wow!! The founder and leader of the Phantom Troupe <b>Chrollo Lucilfer</b> is just join your family!!\n<i>'Making the abilities yours while exploring the darkness within the soul of the original owner... that's the true pleasure of Skill Hunter.'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue      
-            
+
             elif new_mem.id in KILLUA:
                 update.effective_message.reply_photo(KILLUA_IMG,"wow!! My bro <b>Killua Zoldyck </b> is just join your family!!\n<i>'I'm so tired of killing... I just want to be a kid. Hanging out, doing stuff with Gon. That's it.'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue       
-          
+
             elif new_mem.id in MERUEM:
                 update.effective_message.reply_photo(MERUEM_IMG,"wow!! <b>Meruem </b> is HERE!!\n<i>'Who am I? Why am I here? A king with no name. A borrowed castle. My subjects are mindless drones. If this is the mandate of Heaven I have been given... I fear... I fear nothing... except the tedium that it will bring!!!'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
                 continue     
-             
+
             elif new_mem.id in KITE:
                 update.effective_message.reply_photo(KITE_IMG,"wow!! <b>Kite  (カイト)</b> is HERE!!\n<i>'Kite is killed by Neferpitou, but is soon rebuilt into a manipulated puppet to train the ants. He is later captured by Knuckle and Shoot.'</i> \nTo know about my family do /familylist ",parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-                continue       
-            # Make bot greet admins
+                continue
             elif new_mem.id == bot.id:
                 update.effective_message.reply_text("Hey {}, I'm {}! Thank you for adding me to {}" 
                 " and be sure to check /help in PM for more commands and tricks!".format(user.first_name, bot.first_name, chat_name))
 
             else:
                 # If welcome message is media, send with appropriate function
-                if welc_type != sql.Types.TEXT and welc_type != sql.Types.BUTTON_TEXT:
+                if welc_type not in [sql.Types.TEXT, sql.Types.BUTTON_TEXT]:
                     ENUM_FUNC_MAP[welc_type](chat.id, cust_welcome)
                     return
                 # else, move on
@@ -248,8 +244,8 @@ def new_member(bot: Bot, update: Update):
 
                 sent = send(update, res, keyboard,
                             sql.DEFAULT_WELCOME.format(first=first_name))  # type: Optional[Message]
-            
-                
+
+
                 #Sudo user exception from mutes:
                 if is_user_ban_protected(chat, new_mem.id, chat.get_member(new_mem.id)):
                     continue
@@ -265,11 +261,10 @@ def new_member(bot: Bot, update: Update):
                                              can_send_media_messages=False, 
                                              can_send_other_messages=False, 
                                              can_add_web_page_previews=False)
-                        
+
             delete_join(bot, update)
 
-        prev_welc = sql.get_clean_pref(chat.id)
-        if prev_welc:
+        if prev_welc := sql.get_clean_pref(chat.id):
             try:
                 bot.delete_message(chat.id, prev_welc)
             except BadRequest as excp:
@@ -283,8 +278,7 @@ def left_member(bot: Bot, update: Update):
     chat = update.effective_chat  # type: Optional[Chat]
     should_goodbye, cust_goodbye, goodbye_type = sql.get_gdbye_pref(chat.id)
     if should_goodbye:
-        left_mem = update.effective_message.left_chat_member
-        if left_mem:
+        if left_mem := update.effective_message.left_chat_member:
             # Ignore bot being kicked
             if left_mem.id == bot.id:
                 return
@@ -301,7 +295,7 @@ def left_member(bot: Bot, update: Update):
                 return
 
             # if media goodbye, use appropriate function for it
-            if goodbye_type != sql.Types.TEXT and goodbye_type != sql.Types.BUTTON_TEXT:
+            if goodbye_type not in [sql.Types.TEXT, sql.Types.BUTTON_TEXT]:
                 ENUM_FUNC_MAP[goodbye_type](chat.id, cust_goodbye)
                 return
 
@@ -339,7 +333,7 @@ def left_member(bot: Bot, update: Update):
 def welcome(bot: Bot, update: Update, args: List[str]):
     chat = update.effective_chat  # type: Optional[Chat]
     # if no args, show current replies.
-    if len(args) == 0 or args[0].lower() == "noformat":
+    if not args or args[0].lower() == "noformat":
         noformat = args and args[0].lower() == "noformat"
         pref, welcome_m, welcome_type = sql.get_welc_pref(chat.id)
         update.effective_message.reply_text(
@@ -359,12 +353,11 @@ def welcome(bot: Bot, update: Update, args: List[str]):
 
                 send(update, welcome_m, keyboard, sql.DEFAULT_WELCOME)
 
-        else:
-            if noformat:
-                ENUM_FUNC_MAP[welcome_type](chat.id, welcome_m)
+        elif noformat:
+            ENUM_FUNC_MAP[welcome_type](chat.id, welcome_m)
 
-            else:
-                ENUM_FUNC_MAP[welcome_type](chat.id, welcome_m, parse_mode=ParseMode.MARKDOWN)
+        else:
+            ENUM_FUNC_MAP[welcome_type](chat.id, welcome_m, parse_mode=ParseMode.MARKDOWN)
 
     elif len(args) >= 1:
         if args[0].lower() in ("on", "yes"):
@@ -384,7 +377,7 @@ def welcome(bot: Bot, update: Update, args: List[str]):
 def goodbye(bot: Bot, update: Update, args: List[str]):
     chat = update.effective_chat  # type: Optional[Chat]
 
-    if len(args) == 0 or args[0] == "noformat":
+    if not args or args[0] == "noformat":
         noformat = args and args[0] == "noformat"
         pref, goodbye_m, goodbye_type = sql.get_gdbye_pref(chat.id)
         update.effective_message.reply_text(
@@ -404,12 +397,11 @@ def goodbye(bot: Bot, update: Update, args: List[str]):
 
                 send(update, goodbye_m, keyboard, sql.DEFAULT_GOODBYE)
 
-        else:
-            if noformat:
-                ENUM_FUNC_MAP[goodbye_type](chat.id, goodbye_m)
+        elif noformat:
+            ENUM_FUNC_MAP[goodbye_type](chat.id, goodbye_m)
 
-            else:
-                ENUM_FUNC_MAP[goodbye_type](chat.id, goodbye_m, parse_mode=ParseMode.MARKDOWN)
+        else:
+            ENUM_FUNC_MAP[goodbye_type](chat.id, goodbye_m, parse_mode=ParseMode.MARKDOWN)
 
     elif len(args) >= 1:
         if args[0].lower() in ("on", "yes"):
@@ -503,8 +495,8 @@ def safemode(bot: Bot, update: Update, args: List[str]) -> str:
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
     msg = update.effective_message # type: Optional[Message]
-    
-    if len(args) >= 1:
+
+    if args:
         if  args[0].lower() in ("off", "no"):
             sql.set_welcome_mutes(chat.id, False)
             msg.reply_text("I will no longer mute people on joining!")

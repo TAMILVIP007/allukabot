@@ -31,9 +31,9 @@ def stickerid(bot: Bot, update: Update):
 @run_async
 def getsticker(bot: Bot, update: Update):
     msg = update.effective_message
-    chat_id = update.effective_chat.id 
+    chat_id = update.effective_chat.id
     if msg.reply_to_message:
-       if msg.reply_to_message and msg.reply_to_message.sticker:
+        if msg.reply_to_message.sticker:
             file_id = msg.reply_to_message.sticker.file_id 
             newFile = bot.get_file(file_id)
             newFile.download('sticker.png')
@@ -45,36 +45,36 @@ def getsticker(bot: Bot, update: Update):
                bot.sendDocument(chat_id, document=open('sticker.png', 'rb'))
             except IOError: 
                    update.effective_message.reply_text
-            os.remove("sticker.png")       
-       elif msg.reply_to_message.photo:
-            file_id = msg.reply_to_message.photo[-1].file_id 
-            newFile = bot.get_file(file_id)
-            newFile.download('sticker.png')
-            size = 512,512
-            try:
-               im = Image.open('sticker.png')
-               im.thumbnail(size, Image.ANTIALIAS)
-               im.save("sticker.png", "png") 
-               bot.sendDocument(chat_id, document=open('sticker.png', 'rb'))
-            except IOError: 
-                   update.effective_message.reply_text("Dammit, got some errors while processing the sticker, you may report it to my master - (@allukatm) if the error persists.")
+            os.remove("sticker.png")
+        elif msg.reply_to_message.photo:
+             file_id = msg.reply_to_message.photo[-1].file_id 
+             newFile = bot.get_file(file_id)
+             newFile.download('sticker.png')
+             size = 512,512
+             try:
+                im = Image.open('sticker.png')
+                im.thumbnail(size, Image.ANTIALIAS)
+                im.save("sticker.png", "png") 
+                bot.sendDocument(chat_id, document=open('sticker.png', 'rb'))
+             except IOError: 
+                    update.effective_message.reply_text("Dammit, got some errors while processing the sticker, you may report it to my master - (@allukatm) if the error persists.")
 
-            os.remove("sticker.png")
-       elif msg.reply_to_message.document:
-            file_id = msg.reply_to_message.document.file_id
-            newFile = bot.get_file(file_id)
-            newFile.download('sticker.png')
-            size = 512,512
-            try:
-               im = Image.open('sticker.png')
-               im.thumbnail(size, Image.ANTIALIAS)
-               im.save("sticker.png", "png") 
-               bot.sendDocument(chat_id, document=open('sticker.png', 'rb'))
-            except IOError: 
-                   update.effective_message.reply_text("Dammit, got some errors while processing the sticker, you may report it to my master - (@spookyenvy) if the error persists.")
-            os.remove("sticker.png")
-       else:
-           update.effective_message.reply_text("Unknown format. sticker/photo/document are the supported formats.")
+             os.remove("sticker.png")
+        elif msg.reply_to_message.document:
+             file_id = msg.reply_to_message.document.file_id
+             newFile = bot.get_file(file_id)
+             newFile.download('sticker.png')
+             size = 512,512
+             try:
+                im = Image.open('sticker.png')
+                im.thumbnail(size, Image.ANTIALIAS)
+                im.save("sticker.png", "png") 
+                bot.sendDocument(chat_id, document=open('sticker.png', 'rb'))
+             except IOError: 
+                    update.effective_message.reply_text("Dammit, got some errors while processing the sticker, you may report it to my master - (@spookyenvy) if the error persists.")
+             os.remove("sticker.png")
+        else:
+            update.effective_message.reply_text("Unknown format. sticker/photo/document are the supported formats.")
     else:
         update.effective_message.reply_text("Please reply to a sticker/photo/document for me to upload its PNG.")
 
@@ -89,8 +89,7 @@ def kang(bot: Bot, update: Update, args: List[str]):
     packname = f"c{user.id}_by_{bot.username}"
     kangsticker = "kangsticker.png"
 
-    reply = msg.reply_to_message
-    if reply:
+    if reply := msg.reply_to_message:
         if reply.sticker:
             file_id = reply.sticker.file_id
         elif reply.photo:
@@ -108,7 +107,7 @@ def kang(bot: Bot, update: Update, args: List[str]):
             sticker_emoji = reply.sticker.emoji
         else:
             sticker_emoji = "🤔"
-    elif args and not reply:
+    elif args:
         urlemoji = msg.text.split(" ")
         if len(urlemoji) == 3:                
             png_sticker = urlemoji[1]
@@ -168,12 +167,12 @@ def makepack_internal(msg, user, png_sticker, emoji, bot):
                                              emojis=emoji)
     except TelegramError as e:
         print(e)
-        if e.message == "Sticker set name is already occupied":
-            msg.reply_text("Your pack can be found [here](t.me/addstickers/%s)" % packname,
-                           parse_mode=ParseMode.MARKDOWN)
-        elif e.message == "Peer_id_invalid":
+        if e.message == "Peer_id_invalid":
             msg.reply_text("I need you to PM to me first to be able to gain your basic information.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
                 text="PM the bot", url=f"t.me/{bot.username}")]]))
+        elif e.message == "Sticker set name is already occupied":
+            msg.reply_text("Your pack can be found [here](t.me/addstickers/%s)" % packname,
+                           parse_mode=ParseMode.MARKDOWN)
         return
 
     if success:
@@ -184,7 +183,6 @@ def makepack_internal(msg, user, png_sticker, emoji, bot):
 
 def imresize(kangsticker):
     im = Image.open(kangsticker)
-    maxsize = (512, 512)
     if (im.width and im.height) < 512:
         size1 = im.width
         size2 = im.height
@@ -201,6 +199,7 @@ def imresize(kangsticker):
         sizenew = (size1new, size2new)
         im = im.resize(sizenew)
     else:
+        maxsize = (512, 512)
         im.thumbnail(maxsize)
     return im
 

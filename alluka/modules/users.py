@@ -39,9 +39,7 @@ def get_user_id(username):
                     return userdat.id
 
             except BadRequest as excp:
-                if excp.message == 'Chat not found':
-                    pass
-                else:
+                if excp.message != 'Chat not found':
                     LOGGER.exception("Error extracting user ID")
 
     return None
@@ -104,7 +102,7 @@ def chats(bot: Bot, update: Update):
             else:
                 invitelink = "0"
             chatfile += "{}. {} | {} | {} | {}\n".format(P, chat.chat_name, chat.chat_id, chat_members, invitelink)
-            P = P + 1
+            P += 1
         except:
             pass
 

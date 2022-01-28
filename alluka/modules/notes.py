@@ -51,24 +51,22 @@ def get(bot, update, notename, show_none=True, no_format=False):
                 try:
                     bot.forward_message(chat_id=chat_id, from_chat_id=MESSAGE_DUMP, message_id=note.value)
                 except BadRequest as excp:
-                    if excp.message == "Message to forward not found":
-                        message.reply_text("This message seems to have been lost - I'll remove it "
-                                           "from your notes list.")
-                        sql.rm_note(chat_id, notename)
-                    else:
+                    if excp.message != "Message to forward not found":
                         raise
+                    message.reply_text("This message seems to have been lost - I'll remove it "
+                                       "from your notes list.")
+                    sql.rm_note(chat_id, notename)
             else:
                 try:
                     bot.forward_message(chat_id=chat_id, from_chat_id=chat_id, message_id=note.value)
                 except BadRequest as excp:
-                    if excp.message == "Message to forward not found":
-                        message.reply_text("Looks like the original sender of this note has deleted "
-                                           "their message - sorry! Get your bot admin to start using a "
-                                           "message dump to avoid this. I'll remove this note from "
-                                           "your saved notes.")
-                        sql.rm_note(chat_id, notename)
-                    else:
+                    if excp.message != "Message to forward not found":
                         raise
+                    message.reply_text("Looks like the original sender of this note has deleted "
+                                       "their message - sorry! Get your bot admin to start using a "
+                                       "message dump to avoid this. I'll remove this note from "
+                                       "your saved notes.")
+                    sql.rm_note(chat_id, notename)
         else:
             text = note.value
             keyb = []
@@ -168,7 +166,7 @@ def save(bot: Bot, update: Update):
 @user_admin
 def clear(bot: Bot, update: Update, args: List[str]):
     chat_id = update.effective_chat.id
-    if len(args) >= 1:
+    if args:
         notename = args[0]
 
         if sql.rm_note(chat_id, notename):
@@ -185,7 +183,6 @@ def list_notes(bot: Bot, update: Update):
     note_list = sql.get_all_chat_notes(chat_id)
     chat_name = chat.title or chat.first or chat.username
     msg = "*List of notes in {}:*\n"
-    des = "You can get notes by using `/get notename`, or `#notename`.\n"
     for note in note_list:
         note_name = (" • `{}`\n".format(note.name))
         if len(msg) + len(note_name) > MAX_MESSAGE_LENGTH:
@@ -193,50 +190,44 @@ def list_notes(bot: Bot, update: Update):
             msg = ""
         msg += note_name
 
-    if msg == "*List of notes in {}:*\n":
+    if not msg:
+        pass
+    elif msg == "*List of notes in {}:*\n":
         update.effective_message.reply_text("No notes in this chat!")
 
-    elif len(msg) != 0:
+    else:
+        des = "You can get notes by using `/get notename`, or `#notename`.\n"
         update.effective_message.reply_text(msg.format(chat_name) + des, parse_mode=ParseMode.MARKDOWN)
 
 @run_async
 @user_admin
 def private_note(bot: Bot, update: Update, args: List[str]):
 
-	chat = update.effective_chat  # type: Optional[Chat]
-	user = update.effective_user  # type: Optional[User]
-	conn = connected(bot, update, chat, user.id)
-	if conn:
-		chat_id = conn
-		chat_name = dispatcher.bot.getChat(conn).title
-	else:
-		chat_id = update.effective_chat.id
-		if chat.type == "private":
-			chat_name = chat.title
-		else:
-			chat_name = chat.title
-
-	if len(args) >= 1:
-		if args[0] in ("yes", "on"):
-			if len(args) >= 2:
-				if args[1] == "del":
-					sql.private_note(str(chat_id), True, True)
-					send_message(update.effective_message, "Private Note was *enabled*, when users get notes, the message will be sent to the PM and the hashtag message will be deleted.", parse_mode="markdown")
-				else:
-					sql.private_note(str(chat_id), True, False)
-					send_message(update.effective_message, "Private Note was *enabled*, when users get notes, the message will be sent to the PM.", parse_mode="markdown")
-			else:
-				sql.private_note(str(chat_id), True, False)
-				send_message(update.effective_message, "Private Note was *enabled*, when users get notes, the message will be sent to the PM.", parse_mode="markdown")
-		elif args[0] in ("no", "off"):
-			sql.private_note(str(chat_id), False, False)
-			send_message(update.effective_message, "Private Note was *disabled*, notes will be sent to group.", parse_mode="markdown")
-		else:
-			send_message(update.effective_message, "Unknown argument - please use 'yes', or 'no'.")
-	else:
-		is_private, is_delete = sql.get_private_note(chat_id)
-		print(is_private, is_delete)
-		send_message(update.effective_message, "Current Private Note settings at {}: *{}*{}".format(chat_name, "Enabled" if is_private else "Disabled", " - *Hash will be deleted*" if is_delete else ""), parse_mode="markdown")
+    chat = update.effective_chat  # type: Optional[Chat]
+    user = update.effective_user  # type: Optional[User]
+    if conn := connected(bot, update, chat, user.id):
+        chat_id = conn
+        chat_name = dispatcher.bot.getChat(conn).title
+    else:
+        chat_id = update.effective_chat.id
+        chat_name = chat.title
+    if args:
+        if args[0] in ("yes", "on"):
+            if len(args) >= 2 and args[1] == "del":
+                sql.private_note(str(chat_id), True, True)
+                send_message(update.effective_message, "Private Note was *enabled*, when users get notes, the message will be sent to the PM and the hashtag message will be deleted.", parse_mode="markdown")
+            else:
+                sql.private_note(str(chat_id), True, False)
+                send_message(update.effective_message, "Private Note was *enabled*, when users get notes, the message will be sent to the PM.", parse_mode="markdown")
+        elif args[0] in ("no", "off"):
+        	sql.private_note(str(chat_id), False, False)
+        	send_message(update.effective_message, "Private Note was *disabled*, notes will be sent to group.", parse_mode="markdown")
+        else:
+            send_message(update.effective_message, "Unknown argument - please use 'yes', or 'no'.")
+    else:
+        is_private, is_delete = sql.get_private_note(chat_id)
+        print(is_private, is_delete)
+        send_message(update.effective_message, "Current Private Note settings at {}: *{}*{}".format(chat_name, "Enabled" if is_private else "Disabled", " - *Hash will be deleted*" if is_delete else ""), parse_mode="markdown")
 
 @run_async
 @user_admin
@@ -246,18 +237,14 @@ def remove_all_notes(bot: Bot, update: Update):
     message = update.effective_message
     msg_id = update.effective_message.message_id
 
-    if chat.type == "private":
-        pass
-    else:
+    if chat.type != "private":
         owner = chat.get_member(user.id)
         if owner.status != 'creator':
             message.reply_text(chat.id, "You must be this chat creator.")
             return
 
     note_list = sql.get_all_chat_notes(chat.id)
-    x = 0
     for notename in note_list:
-        x += 1
         note = notename.name.lower()
         sql.rm_note(chat.id, note)
 
@@ -268,12 +255,9 @@ def remove_all_notes(bot: Bot, update: Update):
 def __import_data__(chat_id, data):
     failures = []
     for notename, notedata in data.get('extra', {}).items():
-        match = FILE_MATCHER.match(notedata)
-
-        if match:
+        if match := FILE_MATCHER.match(notedata):
             failures.append(notename)
-            notedata = notedata[match.end():].strip()
-            if notedata:
+            if notedata := notedata[match.end() :].strip():
                 sql.add_note_to_db(chat_id, notename[1:], notedata, sql.Types.TEXT)
         else:
             sql.add_note_to_db(chat_id, notename[1:], notedata, sql.Types.TEXT)

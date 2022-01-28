@@ -17,9 +17,7 @@ from telegram.ext import run_async, CommandHandler
 @run_async
 def direct_link_generator(bot: Bot, update: Update):
     message = update.effective_message
-    text = message.text[len('/direct '):]
-
-    if text:
+    if text := message.text[len('/direct ') :]:
         links = re.findall(r'\bhttps?://.*\.\S+', text)
     else:
         message.reply_text("Usage: /direct <url>")

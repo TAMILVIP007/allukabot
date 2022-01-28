@@ -58,7 +58,7 @@ def load(bot: Bot, update: Update):
     message = update.effective_message
     text = message.text.split(" ", 1)[1]
     load_messasge = message.reply_text(f"Attempting to load module : <b>{text}</b>", parse_mode=ParseMode.HTML)
-    
+
     try:
         imported_module = importlib.import_module("alluka.modules." + text)
     except:
@@ -68,12 +68,12 @@ def load(bot: Bot, update: Update):
     if not hasattr(imported_module, "__mod_name__"):
         imported_module.__mod_name__ = imported_module.__name__
 
-    if not imported_module.__mod_name__.lower() in IMPORTED:
+    if imported_module.__mod_name__.lower() not in IMPORTED:
         IMPORTED[imported_module.__mod_name__.lower()] = imported_module
     else:
         load_messasge.edit_text("Module already loaded.")
         return
-    
+
     if "__handlers__" in dir(imported_module):
         handlers = imported_module.__handlers__
         for handler in handlers:
@@ -222,8 +222,8 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
         user_member = chat.get_member(user_id)
     except:
         return log_message
-    
-    if user_member.status == 'administrator' or user_member.status == 'creator':
+
+    if user_member.status in ['administrator', 'creator']:
         message.reply_text("How am I meant to promote someone that's already an admin?")
         return log_message
 
@@ -247,13 +247,11 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
     except BadRequest as err:
         if err.message == "User_not_mutual_contact":
             message.reply_text("I can't promote someone who isn't in the group.")
-            return log_message
         else:
             message.reply_text("An error occured while promoting.")
-            return log_message
-                         
+        return log_message
     bot.sendMessage(chat.id, "Sucessfully promoted <b>{}</b>!".format(user_member.user.first_name or user_id), parse_mode=ParseMode.HTML)
-    
+
     log_message += "<b>{}:</b>" \
                    "\n#PROMOTED" \
                    "\n<b>Admin:</b> {}" \
@@ -286,12 +284,12 @@ def demote(bot: Bot, update: Update, args: List[str]) -> str:
         user_member = chat.get_member(user_id)
     except:
         return log_message
-    
+
     if user_member.status == 'creator':
         message.reply_text("This person CREATED the chat, how would I demote them?")
         return log_message
 
-    if not user_member.status == 'administrator':
+    if user_member.status != 'administrator':
         message.reply_text("Can't demote what wasn't promoted!")
         return log_message
 
@@ -318,7 +316,7 @@ def demote(bot: Bot, update: Update, args: List[str]) -> str:
                        "\n<b>User:</b> {}".format(html.escape(chat.title),
                                                     mention_html(user.id, user.first_name),
                                                     mention_html(user_member.user.id, user_member.user.first_name))
-        
+
         return log_message
     except BadRequest:
         message.reply_text("Could not demote. I might not be admin, or the admin status was appointed by another" \
@@ -351,7 +349,7 @@ def set_title(bot: Bot, update: Update, args: List[str]):
         message.reply_text("This person CREATED the chat, how can i set custom title for him?")
         return
 
-    if not user_member.status == 'administrator':
+    if user_member.status != 'administrator':
         message.reply_text("Can't set title for non-admins!\nPromote them first to set custom title!")
         return
 
@@ -387,26 +385,26 @@ def pin(bot: Bot, update: Update, args: List[str]) -> str:
     user = update.effective_user
     chat = update.effective_chat
 
-    is_group = chat.type != "private" and chat.type != "channel"
+    is_group = chat.type not in ["private", "channel"]
     prev_message = update.effective_message.reply_to_message
 
     is_silent = True
-    if len(args) >= 1:
-        is_silent = not (args[0].lower() == 'notify' or args[0].lower() == 'loud' or args[0].lower() == 'violent')
+    if args:
+        is_silent = not args[0].lower() in ['notify', 'loud', 'violent']
 
     if prev_message and is_group:
         try:
             bot.pinChatMessage(chat.id, prev_message.message_id, disable_notification=is_silent)
         except BadRequest as excp:
-            if excp.message == "Chat_not_modified":
-                pass
-            else:
+            if excp.message != "Chat_not_modified":
                 raise
-        log_message = "<b>{}:</b>" \
-                      "\n#PINNED" \
-                      "\n<b>Admin:</b> {}".format(html.escape(chat.title), mention_html(user.id, user.first_name))
-        
-        return log_message
+        return (
+            "<b>{}:</b>"
+            "\n#PINNED"
+            "\n<b>Admin:</b> {}".format(
+                html.escape(chat.title), mention_html(user.id, user.first_name)
+            )
+        )
 
 
 @run_async
@@ -422,17 +420,13 @@ def unpin(bot: Bot, update: Update) -> str:
     try:
         bot.unpinChatMessage(chat.id)
     except BadRequest as excp:
-        if excp.message == "Chat_not_modified":
-            pass
-        else:
+        if excp.message != "Chat_not_modified":
             raise
 
-    log_message = "<b>{}:</b>" \
+    return "<b>{}:</b>" \
                   "\n#UNPINNED" \
                   "\n<b>Admin:</b> {}".format(html.escape(chat.title),
                                        mention_html(user.id, user.first_name))
-
-    return log_message
 
 @run_async
 @bot_admin
@@ -443,7 +437,7 @@ def invite(bot: Bot, update: Update):
 
     if chat.username:
         update.effective_message.reply_text(chat.username)
-    elif chat.type == chat.SUPERGROUP or chat.type == chat.CHANNEL:
+    elif chat.type in [chat.SUPERGROUP, chat.CHANNEL]:
         bot_member = chat.get_member(bot.id)
         if bot_member.can_invite_users:
             invitelink = bot.exportChatInviteLink(chat.id)

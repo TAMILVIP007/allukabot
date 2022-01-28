@@ -4,10 +4,7 @@ from telegram.ext import CommandHandler, RegexHandler, MessageHandler
 from alluka import ALLOW_EXCL
 import alluka.modules.sql.blacklistusers_sql as sql
 
-if ALLOW_EXCL:
-    CMD_STARTERS = ('/', '!')
-else:
-    CMD_STARTERS = ('/')
+CMD_STARTERS = ('/', '!') if ALLOW_EXCL else '/'
 
 
 class CustomCommandHandler(CommandHandler):

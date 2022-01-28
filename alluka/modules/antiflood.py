@@ -32,13 +32,12 @@ def check_flood(bot: Bot, update: Update) -> str:
     should_ban = sql.update_flood(chat.id, user.id)
     if not should_ban:
         return ""
-    
-    soft_flood = sql.get_flood_strength(chat.id)
-    if soft_flood:  # kick
+
+    if soft_flood := sql.get_flood_strength(chat.id):
         chat.unban_member(user.id)
         reply = "Wonderful, I don't like your flooding. Get out! {} has been kicked!".format(mention_html(user.id, user.first_name))
 
-    else:  # ban
+    else:
         chat.kick_member(user.id)
         reply = "Frankly, I like to leave the flooding to natural disasters. {} has been banned!".format(mention_html(user.id, user.first_name))
     try:
@@ -68,9 +67,9 @@ def set_flood(bot: Bot, update: Update, args: List[str]) -> str:
     user = update.effective_user  # type: Optional[User]
     message = update.effective_message  # type: Optional[Message]
 
-    if len(args) >= 1:
+    if args:
         val = args[0].lower()
-        if val == "off" or val == "no" or val == "0":
+        if val in ["off", "no", "0"]:
             sql.set_flood(chat.id, 0)
             message.reply_text("Anti-flood has been disabled.")
 
@@ -112,14 +111,12 @@ def flood(bot: Bot, update: Update):
     limit = sql.get_flood_limit(chat.id)
     if limit == 0:
         update.effective_message.reply_text("I'm not currently enforcing flood control!")
+    elif soft_flood := sql.get_flood_strength(chat.id):
+        msg.reply_text("I'm currently kicking users out if they send more than {} " 
+                       "consecutive messages. They will be able to join again!".format(limit, parse_mode=ParseMode.MARKDOWN))
     else:
-        soft_flood = sql.get_flood_strength(chat.id)
-        if soft_flood:
-            msg.reply_text("I'm currently kicking users out if they send more than {} " 
-                           "consecutive messages. They will be able to join again!".format(limit, parse_mode=ParseMode.MARKDOWN))
-        else:
-            msg.reply_text("I'm currently banning users if they send more than {} " 
-                           "consecutive messages.".format(limit, parse_mode=ParseMode.MARKDOWN))
+        msg.reply_text("I'm currently banning users if they send more than {} " 
+                       "consecutive messages.".format(limit, parse_mode=ParseMode.MARKDOWN))
 
 @run_async
 @user_admin
@@ -174,11 +171,10 @@ def __chat_settings__(chat_id, user_id):
     soft_flood = sql.get_flood_strength(chat_id)
     if limit == 0:
         return "*Not* currently enforcing flood control."
+    if soft_flood:
+        return "Anti-flood is set to `{}` messages and *KICK* if exceeded.".format(limit)
     else:
-        if soft_flood:
-            return "Anti-flood is set to `{}` messages and *KICK* if exceeded.".format(limit)
-        else:
-            return "Anti-flood is set to `{}` messages and *BAN* if exceeded.".format(limit)
+        return "Anti-flood is set to `{}` messages and *BAN* if exceeded.".format(limit)
 __help__ = """
 You know how sometimes, people join, send 100 messages, and ruin your chat? With antiflood, that happens no more!
 Antiflood allows you to take action on users that send more than x messages in a row. Exceeding the set flood \

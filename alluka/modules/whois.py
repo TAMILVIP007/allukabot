@@ -26,9 +26,7 @@ import alluka.modules.sql.users_sql as sql
 def info(bot: Bot, update: Update, args: List[str]):
     message = update.effective_message
     chat = update.effective_chat
-    user_id = extract_user(update.effective_message, args)
-
-    if user_id:
+    if user_id := extract_user(update.effective_message, args):
         user = bot.get_chat(user_id)
 
     elif not message.reply_to_message and not args:
@@ -55,7 +53,7 @@ def info(bot: Bot, update: Update, args: List[str]):
 
     text += f"\nPermanent user link: {mention_html(user.id, 'link')}"
 
-    
+
     num_chats = sql.get_user_num_chats(user.id)
     text += f"\nChat count: <code>{num_chats}</code>"
 
@@ -70,30 +68,30 @@ def info(bot: Bot, update: Update, args: List[str]):
     except BadRequest:
         pass
 
-   
+
 
     if user.id == OWNER_ID:
         text += "\nThis person is my owner - I would never do anything against them!."
-        
+
     elif user.id in DEV_USERS:
         text += "\nThis person is my dev - I would never do anything against them!."
-        
+
     elif user.id in SUDO_USERS:
         text += "\nThis person is one of my sudo users! " \
                     "Nearly as powerful as my owner - so watch it.."
-        
+
     elif user.id in SUPPORT_USERS:
         text += "\nThis person is one of my support users! " \
                         "Not quite a sudo user, but can still gban you off the map."
-        
-  
-       
+
+
+
     elif user.id in WHITELIST_USERS:
         text += "\nThis person has been whitelisted! " \
                         "That means I'm not allowed to ban/kick them."
-       
 
-    
+
+
     text +="\n"
     text += "\nCAS banned: "
     result = cas.banchecker(user.id)
